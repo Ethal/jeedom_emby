@@ -1,0 +1,39 @@
+{
+    "name": "locker",
+    "commands": [
+        {
+            "name": "Statut",
+            "type": "info",
+            "subtype": "binary",
+            "display": {
+				"generic_type": "LOCK_STATE"
+            },
+            "template": {
+                "dashboard": "lock",
+                "mobile": "lock"
+            },
+            "configuration": {
+				"category": "locker"
+            },
+            "isVisible": 1,
+            "logicalId": "status"
+        },
+        {
+            "name": "Batterie",
+            "type": "info",
+            "subtype": "numeric",
+            "display": {
+				"generic_type": "DONT"
+            },
+            "template": {
+                "dashboard": "line",
+                "mobile": "line"
+            },
+            "configuration": {
+				"category": "locker"
+            },
+            "isVisible": 0,
+            "logicalId": "battery"
+        }
+    ]
+}

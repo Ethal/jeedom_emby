@@ -1,0 +1,8 @@
+{
+	"id" : "emby",
+	"name" : "Emby",
+	"licence" : "AGPL",
+	"author" : "lunarok",
+	"require" : "3.0",
+	"category" : "multimedia"
+}

@@ -339,27 +339,6 @@ class emby extends eqLogic {
     }
   }
 
-  public function cron() {
-    //scan des lockers par les gateways toutes les 15mn
-    foreach (eqLogic::byType('emby', true) as $keyeq) {
-      if ($keyeq->getConfiguration('type') == 'gateway') {
-        $keyeq->scanLockers();
-      }
-    }
-  }
-
-  public function cron30() {
-    //update des infos de l'API (lockers existants, batterie, status) + verification que les share sont existants
-    emby::updateUser();
-    emby::checkShare();
-  }
-
-  public function pageConf() {
-    //sur sauvegarde page de conf update des infos de l'API (lockers existants, batterie, status) + verification que les share sont existants
-    emby::updateUser();
-    emby::checkShare();
-  }
-
   public function pingHost () {
     $connection = @fsockopen($this->getConfiguration('ipfield'), 80);
     if (is_resource($connection)) {
@@ -372,86 +351,7 @@ class emby extends eqLogic {
     return $result;
   }
 
-  public function callGateway($uri,$id = '', $code = '') {
-    if (!$this->pingHost()) {
-      log::add('emby', 'debug', 'Erreur de connexion gateway');
-      return;
-    }
-    $url = 'http://' . $this->getConfiguration('ipfield') . '/' . $uri;
-    log::add('emby', 'debug', 'URL : ' . $url);
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL,$url);
-    curl_setopt($curl, CURLOPT_POST, 1);
-    if ($uri != ' lockers') {
-      ini_set('date.timezone', 'UTC');
-      $ts = time();
-      $key = hash_hmac('sha256',$ts,$code,true);
-      $hash = base64_encode($key);
-      $fields = array('hash' => $hash, 'identifier' => $id, 'ts' => $ts);
-      $fields_string = '';
-      foreach($fields as $key=>$value) { $fields_string .= $key.'='.$value.'&'; }
-      rtrim($fields_string, '&');
-      curl_setopt($curl,CURLOPT_POST, count($fields));
-      curl_setopt($curl,CURLOPT_POSTFIELDS, $fields_string);
-      log::add('emby', 'debug', 'Array : ' . print_r($fields, true));
-    }
-    curl_setopt($curl,CURLOPT_RETURNTRANSFER , 1);
-    $json = json_decode(curl_exec($curl), true);
-    curl_close ($curl);
-    log::add('emby', 'debug', 'Retour : ' . print_r($json, true));
-    return $json;
-  }
-
-  public function callCloud($url,$data = array('format' => 'json')) {
-    $url = 'https://api.the-keys.fr/fr/api/v2/' . $url;
-    if (isset($data['format'])) {
-      $url .= '?_format=' . $data['format'];
-    }
-    if (time() > config::byKey('timestamp','emby')) {
-      emby::authCloud();
-    }
-    $request_http = new com_http($url);
-    $request_http->setHeader(array('Authorization: Bearer ' . config::byKey('token','emby')));
-    if (!isset($data['format'])) {
-      $request_http->setPost($data);
-    }
-    $output = $request_http->exec(30);
-    $json = json_decode($output, true);
-    log::add('emby', 'debug', 'URL : ' . $url);
-    //log::add('emby', 'debug', 'Authorization: Bearer ' . config::byKey('token','emby'));
-    log::add('emby', 'debug', 'Retour : ' . $output);
-    return $json;
-  }
-
-  public function authCloud() {
-    $url = 'https://api.the-keys.fr/api/login_check';
-    $user = config::byKey('username','emby');
-    $pass = config::byKey('password','emby');
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL,$url);
-    curl_setopt($curl, CURLOPT_POST, 1);
-    $headers = [
-      'Content-Type: application/x-www-form-urlencoded'
-    ];
-    curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-    $fields = array(
-      '_username' => urlencode($user),
-      '_password' => urlencode($pass),
-    );
-    $fields_string = '';
-    foreach($fields as $key=>$value) { $fields_string .= $key.'='.$value.'&'; }
-    $fields_string = substr($fields_string,0,strlen($fields_string)-1);
-    curl_setopt($curl,CURLOPT_POST, count($fields));
-    curl_setopt($curl,CURLOPT_POSTFIELDS, $fields_string);
-    curl_setopt($curl,CURLOPT_RETURNTRANSFER , 1);
-    $json = json_decode(curl_exec($curl), true);
-    curl_close ($curl);
-    $timestamp = time() + (2 * 60 * 60);
-    config::save('token', $json['token'],  'emby');
-    config::save('timestamp', $timestamp,  'emby');
-    //log::add('emby', 'debug', 'Retour : ' . print_r($json, true));
-    return;
-  }
+  
 
 }
 
